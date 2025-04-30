@@ -1,7 +1,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>sample m3u8 page</title>
+    <title>ffmpeg Streaming with m3u8 and Decklink</title>
   </head>
 
   <body>
@@ -11,7 +11,7 @@
     <!-- sample page: https://jlypnc.csb.app/ -->
     <link href="https://vjs.zencdn.net/7.2.3/video-js.css" rel="stylesheet" />
 
-    <h1>Demo m3u8 Streaming</h1>
+    <h1>Demo m3u8 Stream</h1>
     <!-- HTML -->
     <video
       id="hls-example"
@@ -20,60 +20,87 @@
       height="480"
       controls
     >
-      <source
-        type="application/x-mpegURL"
-        src="playlist.m3u8"
-      />
+      <source type="application/x-mpegURL" src="playlist.m3u8" />
     </video>
 
     <h2>FFmpeg HLS command</h2>
 
     <p>
-      This is the command used to generate the m3u8 file and the segments.
+      To install ffmpeg on Mac, you can use
+      <a href="https://brew.sh/" target="_blank">Homebrew</a>
+    </p>
+    <p>
+      Then you need to install ffmpeg with all its libraries (including decklink
+      for BlackMagic devices). We exclude some extensions (chromaprint,
+      libzvbit, libflite)
+    </p>
+    <code style="white-space: pre-wrap">
+      brew install homebrew-ffmpeg/ffmpeg/ffmpeg $(brew options
+      homebrew-ffmpeg/ffmpeg/ffmpeg | grep -vE '\s' | grep -- '--with-' | grep
+      -vi 'chromaprint\|libzvbit\|libflite' | tr '\n' ' ')
+    </code>
+    <p>
+      The following is the command used to generate the m3u8 file and the
+      segments.
       <br />
-        It run on a Mac with an UltraStudio 4K capture card.
-        <br />
-        The command captures the video and audio from the UltraStudio 4K and
-        encodes it into three different resolutions: 1080p, 720p, and 480p.
-        <br />
-        The command uses the HLS (HTTP Live Streaming) format to create the
-        segments and the playlist file.
-        <ul>
-          <li>-map 0:v -map 0:a: maps the video and audio streams from the input</li>
-          <li>-s:v:0 1920x1080 -b:v:0 4500k: sets the resolution and bitrate for 1080p</li>
-          <li>-s:v:1 1280x720 -b:v:1 2500k: sets the resolution and bitrate for 720p</li>
-          <li>-s:v:2 854x480 -b:v:2 1000k: sets the resolution and bitrate for 480p</li>
-          <li>-hls_time 4: sets the segment duration to 4 seconds</li>
-          <li>-hls_list_size 5: sets the maximum number of segments in the playlist</li>
-          <li>-hls_flags delete_segments: deletes the segments after they are played</li>
-          <li>-hls_segment_filename hls/1080p/seg-%03d.ts: sets the segment filename pattern for 1080p</li>
-          <li>hls/1080p/playlist.m3u8: sets the playlist filename for 1080p</li>
-        </ul>
-    
-        </p>  
-        <h3>Just copy paste this into the terminal and edit it accordingly:</h3>
-        <p>To list sources use:</p>
+      The command captures the video and audio from the UltraStudio 4K and
+      encodes it into three different resolutions: 1080p, 720p, and 480p.
+      <br />
+      The command uses the HLS (HTTP Live Streaming) format to create the
+      segments and the playlist file.
+    </p>
 
-        <code style="white-space: pre-wrap;">
-        ffmpeg --list_devices decklink;
-        </code>
-        <p>To list the formats use (we assume you have "Ultrastudio 4K" as result from the previous command):</p>
-        <code style="white-space: pre-wrap;">
-        ffmpeg -f decklink -list_formats all -i "UltraStudio 4K";
-        </code>
+    <ul>
+      <li>
+        -map 0:v -map 0:a: maps the video and audio streams from the input
+      </li>
+      <li>
+        -s:v:0 1920x1080 -b:v:0 4500k: sets the resolution and bitrate for 1080p
+      </li>
+      <li>
+        -s:v:1 1280x720 -b:v:1 2500k: sets the resolution and bitrate for 720p
+      </li>
+      <li>
+        -s:v:2 854x480 -b:v:2 1000k: sets the resolution and bitrate for 480p
+      </li>
+      <li>-hls_time 4: sets the segment duration to 4 seconds</li>
+      <li>
+        -hls_list_size 5: sets the maximum number of segments in the playlist
+      </li>
+      <li>
+        -hls_flags delete_segments: deletes the segments after they are played
+      </li>
+      <li>
+        -hls_segment_filename hls/1080p/seg-%03d.ts: sets the segment filename
+        pattern for 1080p
+      </li>
+      <li>hls/1080p/playlist.m3u8: sets the playlist filename for 1080p</li>
+    </ul>
 
-        <p>Now you can run the command:</p>
-        
-    <code style="white-space: pre-wrap;">
-        ffmpeg -y -f decklink -format_code Hp25 -i "UltraStudio 4K" \
-  -map 0:v -map 0:a -s:v:0 1920x1080 -b:v:0 4500k -c:v:0 libx264 -c:a:0 aac -f hls \
+    <h3>Just copy paste this into the terminal and edit it accordingly:</h3>
+    <p>To list sources use:</p>
+
+    <code style="white-space: pre-wrap"> ffmpeg --list_devices decklink; </code>
+    <p>
+      To list the formats use (we assume you have "Ultrastudio 4K" as result
+      from the previous command):
+    </p>
+    <code style="white-space: pre-wrap">
+      ffmpeg -f decklink -list_formats all -i "UltraStudio 4K";
+    </code>
+
+    <p>Now you can run the command:</p>
+
+    <code style="white-space: pre-wrap">
+      ffmpeg -y -f decklink -format_code Hp25 -i "UltraStudio 4K" \ -map 0:v
+      -map 0:a -s:v:0 1920x1080 -b:v:0 4500k -c:v:0 libx264 -c:a:0 aac -f hls \
       -hls_time 4 -hls_list_size 5 -hls_flags delete_segments \
-      -hls_segment_filename hls/1080p/seg-%03d.ts hls/1080p/playlist.m3u8 \
-  -map 0:v -map 0:a -s:v:1 1280x720 -b:v:1 2500k -c:v:1 libx264 -c:a:1 aac -f hls \
-      -hls_time 4 -hls_list_size 5 -hls_flags delete_segments \
-      -hls_segment_filename hls/720p/seg-%03d.ts hls/720p/playlist.m3u8 \
-  -map 0:v -map 0:a -s:v:2 854x480 -b:v:2 1000k -c:v:2 libx264 -c:a:2 aac -f hls \
-      -hls_time 4 -hls_list_size 5 -hls_flags delete_segments \
+      -hls_segment_filename hls/1080p/seg-%03d.ts hls/1080p/playlist.m3u8 \ -map
+      0:v -map 0:a -s:v:1 1280x720 -b:v:1 2500k -c:v:1 libx264 -c:a:1 aac -f hls
+      \ -hls_time 4 -hls_list_size 5 -hls_flags delete_segments \
+      -hls_segment_filename hls/720p/seg-%03d.ts hls/720p/playlist.m3u8 \ -map
+      0:v -map 0:a -s:v:2 854x480 -b:v:2 1000k -c:v:2 libx264 -c:a:2 aac -f hls
+      \ -hls_time 4 -hls_list_size 5 -hls_flags delete_segments \
       -hls_segment_filename hls/480p/seg-%03d.ts hls/480p/playlist.m3u8;
     </code>
 
